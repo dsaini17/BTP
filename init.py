@@ -72,10 +72,16 @@ model.add(Dropout(0.5))
 model.add(Dense(classes, activation='softmax'))
 
 model.compile(loss='categorical_crossentropy',
-              optimizer='adam',
+              optimizer='sgd',
               metrics=['accuracy'])
 
-model.fit(X_train, y_train, 
-          batch_size=32, nb_epoch=10, verbose=1)
+#model.fit(X_train, y_train, 
+#          batch_size=32, nb_epoch=2, verbose=1)
+
+fname = 'weights-colab-gpu.hdf5'
+model.load_weights(fname)
 
 score = model.evaluate(X_test, y_test, verbose=1)
+
+
+model.save_weights(fname,overwrite=True)
