@@ -27,6 +27,11 @@ model.load_weights(fname)
 # WEBCAM
 # =============================================================================
 
+import sys
+import skvideo.io
+cap = skvideo.io.VideoCapture(sys.argv[1])
+ret, frame = cap.read()
+
 import cv2
 cv2.namedWindow('image', cv2.WINDOW_NORMAL)
 cv2.imshow('image',img)

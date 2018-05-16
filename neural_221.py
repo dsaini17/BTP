@@ -61,7 +61,8 @@ y_test = y[index2:,:]
 import keras
 from keras.models import Sequential
 from keras.layers import Dense,Dropout,Flatten,Activation,Convolution2D,MaxPooling2D,BatchNormalization
-from keras.utils import np_utils
+from keras.utils import np_utils,print_summary,plot_model
+from keras.callbacks import History
 
 # Data Reshaping
 y_train = np_utils.to_categorical(y_train,classes)
@@ -164,6 +165,92 @@ model.compile(loss='categorical_crossentropy',
 
 fname = 'weights-colab-gpu.hdf5'
 model.load_weights(fname)
-score = model.evaluate(X_test, y_test, verbose=1)
+# score = model.evaluate(X_test, y_test, verbose=1)
+y_pred = model.predict(X_validate,verbose = 1)
+
+# =============================================================================
+# Metrics
+# =============================================================================
+
+labels = ['Angry','Disgust','Fear','Happy','Sad','Surprise','Neutral']
+
+# Confusion Matrix
+
+from sklearn.metrics import confusion_matrix,precision_score,recall_score,f1_score,cohen_kappa_score
+
+test_data = y_validate.argmax(1)
+pred_data = y_pred.argmax(1)
+cm = confusion_matrix(test_data,pred_data)
+print(cm)
+
+val = 0
+for i in range(0,7):
+    val += cm[i][i]
+print('Validation Set Accuracy = ' + str(val/(index2-index1)))
+
+max_val = cm.max()
+
+plt.imshow(cm)
+plt.imshow(cm,cmap='gray')
+
+weight_list = []
+
+for i in range(0,7):
+    weight_list.append(0)
+
+for x in pred_data:
+    weight_list[x] += 1
+    
+nm = cm
 
 
+for i in range(0,7):
+    for j in range(0,7):
+        nm[i][j] *= max_val
+        nm[i][j] /= weight_list[i]
+        
+plt.imshow(cm,cmap = 'gray')        
+plt.imshow(cm,interpolation='nearest') # Visualizing Confusion Matrix
+
+# Heat Map
+
+import seaborn as sn
+
+df_cm = pd.DataFrame(nm,index = [labels[i] for i in range(0,7)],columns = [labels[i] for i in range(0,7)])
+sn.set(font_scale = 1)
+sn.heatmap(df_cm,annot = True)
+
+# =============================================================================
+# Metrics
+# =============================================================================
+
+def print_metric(score,metric):
+    print(metric + ' Score is ' + str(score))
+
+def print_all_metrics():
+    print_metric(ps,'Precision')
+    print_metric(rs,'Recall')
+    print_metric(fs,'F1')
+    print_metric(cks,'Cohen Kappa')
+    
+ps = precision_score(test_data,pred_data,average = 'micro')
+
+rs = recall_score(test_data,pred_data,average = 'micro')
+
+fs = f1_score(test_data,pred_data,average = 'micro')
+
+cks = cohen_kappa_score(test_data,pred_data)
+
+print_all_metrics()
+
+# =============================================================================
+# Model Architecture Visualization
+# =============================================================================
+
+from keras.utils import plot_model
+plot_model(model, to_file='model.png')
+
+from IPython.display import SVG
+from keras.utils.vis_utils import model_to_dot
+
+SVG(model_to_dot(model).create(prog='dot', format='svg'))
